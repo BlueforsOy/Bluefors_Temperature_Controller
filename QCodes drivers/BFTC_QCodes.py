@@ -105,29 +105,33 @@ class BFTC(Instrument):
         b = 2.7726                          
         Max_Power = 1.2*a*temperature**b    #Maximum output power for a setpoint. Power curve parameters must be adjusted.
         if Max_Power > 3e-3: Max_Power = 3e-3
-        derivative = 0
         
         #Zone PID implementation 
         
-        if 0.0 <= temperature <= 0.2:           #parameters for 0 to 200mK
-            proportional = 0.0001
+        if 0.0 <= temperature <= 0.08:           #parameters for 0 to 80mK
+            proportional = 0.01
             integral = 500
+            derivative = 0
         else:
-            if 0.2 < temperature <= 0.500:      #parameters for 200mK to 500mK
-                proportional = 0.0001
-                integral = 200
+            if 0.8 < temperature <= 0.500:      #parameters for 80mK to 500mK
+                proportional = 0.03
+                integral = 500
+                derivative = 0.05
             else:
                 if 0.5 < temperature <= 1:      #parameters for 500mK to 1K
-                    proportional = 0.0005
+                    proportional = 0.05
                     integral = 200
+                    derivative = 0.05
                 else:
                     if 1 < temperature <= 2:    #parameters for 1K to 2K
-                        proportional = 0.005
+                        proportional = 0.05
                         integral = 200
+                        derivative = 0.05
                     else:
                         if 2 < temperature:     #parameters for 2K and higher
-                            proportional = 0.005
+                            proportional = 0.05
                             integral = 200
+                            derivative = 0.05
 
         url = "ws://" + ip + ":5002/heater/update"
         ws = websocket.create_connection(url, timeout=TIMEOUT)

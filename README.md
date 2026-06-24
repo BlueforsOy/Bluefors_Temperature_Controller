@@ -20,7 +20,10 @@ BFTC1.set_PID(heater_num = 4, temperature = 0.050) # Set MXC temperature to 50mK
 # Example code (QCodes)
 
 ```py
-# QCodes example. The driver file must be blased to the "..\qcodes\instrument_drivers\Bluefors" folder 
+# QCodes example. The driver file must be blased to the "..\qcodes\instrument_drivers\Bluefors" folder
+
+# Import BFTC driver
+import qcodes.instrument_drivers.Bluefors.BFTC as BF_TC   
 
 BFTC1 = BFTC('BFTC1','192.168.1.1') # Connect to the instrument;
 

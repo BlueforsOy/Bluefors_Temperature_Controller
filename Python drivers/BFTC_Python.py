@@ -48,7 +48,7 @@ class BFTC():
         self.Temperature = data["temperature"]
         return data["temperature"]
     
-    def set_heater_power(self,heater_num,power: float):        #Set the NS heater power output directly, without PID.
+    def set_heater_power(self,heater_num,power: float):        #Set the MXC heater power output directly, without PID.
         TIMEOUT = 10 
         switch = True
         PID_switch = 0
@@ -65,33 +65,37 @@ class BFTC():
         PID_switch = 1
         self.PID_enabled = True
         TIMEOUT = 10
-        a = 2.13709E-5                      #a, b -- power curve parameters for LD system MXC flange, must be adjusted.
+        a = 2.13709E-5                      # a, b -- power curve parameters for an empty LD system MXC flange, should be adjusted based on a power sweep (heater power vs stable MXC temperature).
         b = 2.7726                          
-        Max_Power = 1.2*a*temperature**b    #Maximum output power for a setpoint. Power curve parameters must be adjusted.
+        Max_Power = 1.2*a*temperature**b    # Maximum output power for a setpoint. Power curve parameters should be adjusted to the individual system for better performance.
         if Max_Power > 3e-3: Max_Power = 3e-3
-        derivative = 0
         
         #Zone PID implementation 
         
-        if 0.0 <= temperature <= 0.2:           #parameters for 0 to 200mK
-            proportional = 0.0001
+        if 0.0 <= temperature <= 0.08:           #parameters for 0 to 80mK
+            proportional = 0.01
             integral = 500
+            derivative = 0
         else:
-            if 0.2 < temperature <= 0.500:      #parameters for 200mK to 500mK
-                proportional = 0.0001
-                integral = 200
+            if 0.8 < temperature <= 0.500:      #parameters for 80mK to 500mK
+                proportional = 0.03
+                integral = 500
+                derivative = 0.05
             else:
                 if 0.5 < temperature <= 1:      #parameters for 500mK to 1K
-                    proportional = 0.0005
+                    proportional = 0.05
                     integral = 200
+                    derivative = 0.05
                 else:
                     if 1 < temperature <= 2:    #parameters for 1K to 2K
-                        proportional = 0.005
+                        proportional = 0.05
                         integral = 200
+                        derivative = 0.05
                     else:
                         if 2 < temperature:     #parameters for 2K and higher
-                            proportional = 0.005
+                            proportional = 0.05
                             integral = 200
+                            derivative = 0.05
 
         url = "ws://" + self.ip_address + ":5002/heater/update"
         ws = websocket.create_connection(url, timeout=TIMEOUT)

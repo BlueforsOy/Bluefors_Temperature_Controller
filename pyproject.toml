@@ -1,0 +1,119 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bluefors-tc"
+dynamic = ["version"]
+description = "Python client, command-line tool and QCoDeS driver for the Bluefors Temperature Controller"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Bluefors Oy", email = "support@bluefors.com" }]
+keywords = ["bluefors", "temperature controller", "cryogenics", "dilution refrigerator", "qcodes"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Typing :: Typed",
+]
+dependencies = [
+    "requests>=2.20",
+    "websocket-client>=1.0",
+]
+
+[project.optional-dependencies]
+qcodes = ["qcodes>=0.50"]
+mqtt = ["paho-mqtt>=1.6"]
+examples = ["matplotlib>=3.5"]
+
+# Development tools, installed by `uv sync` (or `pip install --group dev`).
+# Versions are pinned in uv.lock.
+[dependency-groups]
+dev = [
+    "coverage[toml]>=7.6",
+    "deptry>=0.23",
+    "mypy>=1.13",
+    "pytest>=8",
+    "ruff>=0.8",
+    "twine>=6",
+    "types-requests",
+    "websockets>=13",
+]
+
+[project.scripts]
+bluefors-tc = "bluefors_tc.cli:main"
+
+[project.urls]
+Support = "https://bluefors.com/support"
+
+[tool.hatch.version]
+path = "src/bluefors_tc/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bluefors_tc"]
+
+# The source distribution carries what a user needs to read, build and test the
+# package. The CI pipeline and the dev lock file are not part of a release.
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/examples", "/README.md", "/CHANGELOG.md", "/LICENSE", "/pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "live: runs against a real Temperature Controller (needs --tc-host)",
+    "live_write: changes heater settings on a real Temperature Controller (needs --tc-allow-writes)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "C90"]
+ignore = ["UP007", "UP045"]  # keep Optional[...]; moving to `X | None` is a separate cleanup
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+"examples/*" = ["SIM105"]  # plain try/except KeyboardInterrupt reads better in examples
+"tests/fake_tc.py" = ["C901"]  # the fake's request dispatcher is one long if-chain on purpose
+
+# mypy checks as the Python it runs on: current QCoDeS needs 3.12+, and checking
+# it as an older Python misreads its typing imports. ruff (target-version) and
+# the test matrix cover the 3.10 floor.
+[tool.mypy]
+files = ["src"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["websocket", "websocket.*", "pandas"]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+branch = true
+source = ["bluefors_tc"]
+
+[tool.coverage.report]
+skip_empty = true
+show_missing = true
+
+# pandas is optional: imported only inside History.to_dataframe(). It is
+# missing (DEP001) without QCoDeS and transitive through QCoDeS (DEP003).
+[tool.deptry]
+known_first_party = ["bluefors_tc"]
+
+[tool.deptry.per_rule_ignores]
+DEP001 = ["pandas"]
+DEP003 = ["pandas"]
